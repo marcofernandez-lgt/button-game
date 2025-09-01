@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Click Counter</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #3498db; /* Blue background */
+      font-family: Arial, sans-serif;
+      transition: background-color 0.5s ease;
+      text-align: center;
+    }
+    h1 {
+      color: white;
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+    #message {
+      color: yellow;
+      font-size: 1.5rem;
+      margin: 20px;
+      display: none;
+    }
+    button {
+      background-color: red;
+      color: white;
+      border: none;
+      width: 200px;
+      height: 200px;
+      font-size: 2rem;
+      border-radius: 50%; /* Round button */
+      cursor: pointer;
+      position: relative;
+      transition: background-color 0.5s ease, transform 0.2s;
+      overflow: hidden;
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .crack::before, .crack::after {
+      content: "";
+      position: absolute;
+      background: white;
+      opacity: 0.7;
+    }
+    .crack.level1::before {
+      width: 4px; height: 100%; top: 0; left: 50%;
+    }
+    .crack.level2::after {
+      width: 100%; height: 4px; top: 50%; left: 0;
+    }
+    .crack.level3::before {
+      width: 3px; height: 100%; top: 0; left: 25%;
+    }
+    .crack.level3::after {
+      width: 3px; height: 100%; top: 0; left: 75%;
+    }
+    .broken {
+      animation: break 1s forwards;
+    }
+    @keyframes break {
+      to {
+        transform: scale(0) rotate(720deg);
+        opacity: 0;
+      }
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="counter">0</h1>
+  <button id="clickBtn">Click</button>
+  <p id="message">You broke the Button! HOW COULD YOU!!!!!</p>
+  <canvas id="confettiCanvas"></canvas>
+
+  <script>
+    let count = 0;
+    let effectIndex = 0;
+    const counter = document.getElementById("counter");
+    let button = document.getElementById("clickBtn");
+    const body = document.body;
+    const message = document.getElementById("message");
+
+    button.addEventListener("click", handleClick);
+
+    function handleClick() {
+      count++;
+      counter.textContent = count;
+
+      // Cracks every 20 presses before 200
+      if (count % 20 === 0 && count < 200) {
+        addCrack(count / 20);
+      }
+
+      // Break button at 200 clicks
+      if (count === 200) {
+        breakButton();
+        return;
+      }
+
+      if (count % 15 === 0) {
+        triggerEffect();
+      }
+    }
+
+    function addCrack(level) {
+      button.classList.add("crack");
+      if (level === 1) button.classList.add("level1");
+      if (level === 2) button.classList.add("level2");
+      if (level >= 3) button.classList.add("level3");
+    }
+
+    function breakButton() {
+      button.classList.add("broken");
+      setTimeout(() => {
+        button.remove();
+        message.style.display = "block";
+        spawnReloadButton();
+      }, 1000);
+    }
+
+    function spawnReloadButton() {
+      const newButton = document.createElement("button");
+      newButton.textContent = "Restart";
+      document.body.appendChild(newButton);
+      newButton.addEventListener("click", () => {
+        location.reload();
+      });
+    }
+
+    function triggerEffect() {
+      const effects = [confettiEffect, changeBackground, changeButtonColor];
+      effects[effectIndex % effects.length]();
+      effectIndex++;
+    }
+
+    // Confetti effect
+    function confettiEffect() {
+      const canvas = document.getElementById("confettiCanvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      let particles = [];
+      for (let i = 0; i < 100; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          size: Math.random() * 5 + 2,
+          color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+          speed: Math.random() * 3 + 2
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+      }
+
+      function update() {
+        particles.forEach(p => {
+          p.y += p.speed;
+          if (p.y > canvas.height) p.y = -10;
+        });
+      }
+
+      let interval = setInterval(() => {
+        draw();
+        update();
+      }, 30);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }, 3000);
+    }
+
+    function changeBackground() {
+      body.style.backgroundColor =
+        body.style.backgroundColor === "rgb(52, 152, 219)" ? "purple" : "#3498db";
+    }
+
+    function changeButtonColor() {
+      button.style.backgroundColor =
+        button.style.backgroundColor === "red" ? "green" : "red";
+    }
+  </script>
+</body>
+</html>
